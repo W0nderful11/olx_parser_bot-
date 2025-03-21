@@ -2,6 +2,7 @@ import asyncio
 from aiogram import Router, types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.filters.state import StateFilter
 from utils.selenium_parser import run_selenium_parser, split_text
 from config.subcategories import SUBCATEGORY_MAPPING_FULL
 from handlers.start_handler import build_main_menu
@@ -13,7 +14,6 @@ class ParseStates(StatesGroup):
     waiting_for_category = State()
     waiting_for_subcategory = State()
 
-# Полный список регионов для OLX.kz
 REGION_MAPPING = {
     "abay": "Абая",
     "akm": "Акмолинская",
@@ -40,11 +40,11 @@ CATEGORY_MAPPING = {
     "stroitelstvo-remont": "Строительство и ремонт",
     "prokat-tovarov": "Аренда и прокат товаров",
     "elektronika": "Электроника",
-    "dom_i_sad": "Дом и сад",
+    "dom-i-sad": "Дом и сад",
     "rabota": "Работа",
-    "moda_i_stil": "Мода и стиль",
-    "detskiy_mir": "Детский мир",
-    "hobbi_otdyh_sport": "Хобби, отдых и спорт"
+    "moda-i-stil": "Мода и стиль",
+    "detskiy-mir": "Детский мир",
+    "hobbi-otdyh-sport": "Хобби, отдых и спорт"
 }
 
 def build_inline_keyboard(options: dict, prefix: str, buttons_per_row: int = 2) -> types.InlineKeyboardMarkup:
@@ -92,21 +92,19 @@ async def send_ads_batch(message: types.Message, state: FSMContext):
 
 @olx_parser_router.callback_query(lambda c: c.data == "olx_parse")
 async def start_parsing(callback: types.CallbackQuery, state: FSMContext):
+    print("Кнопка 'Запустить парсинг OLX' нажата!")  # Отладочное сообщение
     try:
         await callback.answer()
     except Exception:
         pass
-    data = await state.get_data()
-    if "region" not in data:
-        keyboard = build_inline_keyboard(REGION_MAPPING, "region", buttons_per_row=2)
-        await callback.message.answer("Выберите регион:", reply_markup=keyboard)
-        await state.set_state(ParseStates.waiting_for_region)
-    else:
-        keyboard = build_inline_keyboard(CATEGORY_MAPPING, "category", buttons_per_row=2)
-        await callback.message.answer("Выберите категорию:", reply_markup=keyboard)
-        await state.set_state(ParseStates.waiting_for_category)
+    # Очищаем состояние, чтобы не использовать старые данные
+    await state.clear()
+    # Запрашиваем выбор региона
+    keyboard = build_inline_keyboard(REGION_MAPPING, "region", buttons_per_row=2)
+    await callback.message.answer("Выберите регион:", reply_markup=keyboard)
+    await state.set_state(ParseStates.waiting_for_region)
 
-@olx_parser_router.callback_query(lambda c: c.data.startswith("region:"), ParseStates.waiting_for_region)
+@olx_parser_router.callback_query(lambda c: c.data.startswith("region:"), StateFilter(ParseStates.waiting_for_region))
 async def region_chosen(callback: types.CallbackQuery, state: FSMContext):
     try:
         await callback.answer()
@@ -120,7 +118,7 @@ async def region_chosen(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer("Выберите категорию:", reply_markup=keyboard)
     await state.set_state(ParseStates.waiting_for_category)
 
-@olx_parser_router.callback_query(lambda c: c.data.startswith("category:"), ParseStates.waiting_for_category)
+@olx_parser_router.callback_query(lambda c: c.data.startswith("category:"), StateFilter(ParseStates.waiting_for_category))
 async def category_chosen(callback: types.CallbackQuery, state: FSMContext):
     try:
         await callback.answer()
@@ -149,7 +147,7 @@ async def category_chosen(callback: types.CallbackQuery, state: FSMContext):
         await callback.message.answer("Главное меню:", reply_markup=keyboard)
         await state.clear()
 
-@olx_parser_router.callback_query(lambda c: c.data.startswith("subcategory:"), ParseStates.waiting_for_subcategory)
+@olx_parser_router.callback_query(lambda c: c.data.startswith("subcategory:"), StateFilter(ParseStates.waiting_for_subcategory))
 async def subcategory_chosen(callback: types.CallbackQuery, state: FSMContext):
     try:
         await callback.answer()

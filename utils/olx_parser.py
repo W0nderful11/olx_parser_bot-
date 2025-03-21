@@ -1,6 +1,3 @@
-# utils/olx_parser.py
-# -*- coding: utf8 -*-
-
 import os
 import re
 import time
@@ -8,39 +5,24 @@ import random
 import requests
 from bs4 import BeautifulSoup
 from html import unescape
-from urllib.parse import urljoin
+from urllib.parse import urljoin, quote
 from config.category_urls import CATEGORY_URLS
 
-# Основной URL сайта OLX.kz
 BASE_URL = "https://www.olx.kz"
-
-# Используемый user-agent для имитации реального браузера
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
-)
-
-# Заголовки запроса – имитируют браузерный запрос
+USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+              "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36 OPR/60.0.3255.170")
 HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
     "User-Agent": USER_AGENT,
     "Connection": "keep-alive"
 }
 
 
 def adjust_category_path(category: str) -> str:
-    """
-    Преобразует код категории, заменяя символы (например, "_" на "-"),
-    чтобы получить корректный формат URL, как на сайте OLX.kz.
-    """
     return category.replace("_", "-")
 
 
 def gather_links(city: str, category: str, limit: int = 1) -> list:
-    """
-    Собирает ссылки на страницы с объявлениями из блока ссылок на главной странице категории.
-    Если нужный блок не найден, возвращает пустой список.
-    """
     safe_category = adjust_category_path(category)
     base = CATEGORY_URLS.get(safe_category)
     if not base:
@@ -49,12 +31,12 @@ def gather_links(city: str, category: str, limit: int = 1) -> list:
     url = f"{base}{city}/" if city != "all" else f"{base}all/"
     print(f"[INFO] Запрос: {url}")
     try:
-        response = requests.get(url, headers=HEADERS, timeout=10)
-        response.raise_for_status()
+        r = requests.get(url, headers=HEADERS, timeout=10)
+        r.raise_for_status()
     except Exception as e:
         print(f"[ERROR] Ошибка запроса {url}: {e}")
         return []
-    soup = BeautifulSoup(response.text, "lxml")
+    soup = BeautifulSoup(r.text, "lxml")
     ul_block = soup.find("ul", {"data-testid": "category-count-links"})
     if not ul_block:
         print(f"[ERROR] CATEGORY {category.upper()} IN {city.upper()} DON'T HAVE ANY DATA")
@@ -72,64 +54,32 @@ def gather_links(city: str, category: str, limit: int = 1) -> list:
 
 
 def parse_ad_page(ad_url: str) -> dict:
-    """
-    Парсит страницу отдельного объявления с OLX.kz.
-
-    Используется BeautifulSoup для извлечения данных:
-      - Название: из тега <h4 class="css-10ofhqw">,
-      - Цена: из элемента с классом "price-label",
-      - Описание: из блока с id "textContent",
-      - Дополнительная информация (ID объявления, продавец, адрес) – если присутствуют.
-
-    URL объявления сохраняется в поле "Ссылка", а также извлекается ссылка на фото (если есть).
-
-    Функция имитирует поведение обычного браузера за счёт установки корректных заголовков,
-    небольших задержек и обработки ошибок.
-    """
     try:
-        response = requests.get(ad_url, headers=HEADERS, timeout=10)
-        response.raise_for_status()
+        r = requests.get(ad_url, headers=HEADERS, timeout=10)
+        r.raise_for_status()
     except Exception as e:
         print(f"[ERROR] Ошибка запроса страницы {ad_url}: {e}")
         return {}
-
-    soup = BeautifulSoup(response.text, "lxml")
+    soup = BeautifulSoup(r.text, "lxml")
     offer = soup.find("div", {"id": "offer_active"})
     if not offer:
         print("[WARNING] Контейнер объявления не найден")
         return {}
-
-    # Извлекаем название объявления
     title_tag = offer.find("h4", {"class": "css-10ofhqw"})
     title = title_tag.get_text(strip=True) if title_tag else "Нет заголовка"
-
-    # Извлекаем цену
     price_tag = offer.find("div", {"class": "price-label"})
     price = price_tag.get_text(strip=True) if price_tag else "Нет цены"
-
-    # Извлекаем описание
     desc_tag = offer.find("div", {"id": "textContent"})
     description = desc_tag.get_text(strip=True) if desc_tag else "Нет описания"
-
-    # Извлекаем идентификатор объявления (если есть)
     ad_id_tag = offer.select_one("em > small")
     ad_id = ad_id_tag.get_text(strip=True) if ad_id_tag else "Нет id"
-
-    # Извлекаем данные продавца
     seller_tag = offer.select_one("div.offer-user__details > h4")
     seller = seller_tag.get_text(strip=True) if seller_tag else "Нет продавца"
-
-    # Извлекаем адрес
     address_tag = offer.select_one("address > p")
     address = address_tag.get_text(strip=True) if address_tag else "Нет адреса"
-
-    # Извлекаем фото объявления
     img_tag = offer.select_one("div#photo-gallery-opener > img")
     image = img_tag.get("src") if img_tag and img_tag.get("src") else ""
-
-    # Телефон будет получаться через функцию get_phone (дополнительный запрос)
     phone = "Нет телефона"
-
     data = {
         "Название": unescape(title),
         "Цена": unescape(price),
@@ -145,22 +95,13 @@ def parse_ad_page(ad_url: str) -> dict:
 
 
 def get_phone(ad_url: str) -> str:
-    """
-    Извлекает номер телефона объявления.
-
-    Функция сначала получает страницу объявления, затем ищет в скриптах токен для телефона.
-    Если токен найден, формируется URL запроса номера телефона.
-    Добавлена задержка для имитации реального поведения.
-    Если возникает ошибка – возвращается значение "Нет телефона".
-    """
     try:
-        response = requests.get(ad_url, headers=HEADERS, timeout=10)
-        response.raise_for_status()
+        r = requests.get(ad_url, headers=HEADERS, timeout=10)
+        r.raise_for_status()
     except Exception as e:
         print(f"[ERROR] Ошибка запроса для телефона {ad_url}: {e}")
         return "Нет телефона"
-
-    soup = BeautifulSoup(response.text, "lxml")
+    soup = BeautifulSoup(r.text, "lxml")
     token = None
     for script in soup.find_all("script"):
         if "phoneToken" in script.text:
@@ -171,7 +112,6 @@ def get_phone(ad_url: str) -> str:
     if not token:
         print("[WARNING] Токен для телефона не найден")
         return "Нет телефона"
-
     phone_btn = soup.find("li", class_=lambda x: x and "link-phone" in x)
     ad_id = None
     if phone_btn and phone_btn.get("class"):
@@ -182,7 +122,6 @@ def get_phone(ad_url: str) -> str:
     if not ad_id:
         print("[WARNING] ID для телефона не найден")
         return "Нет телефона"
-
     time.sleep(random.uniform(5, 10))
     phone_url = f"{BASE_URL}/kz/ajax/misc/contact/phone/{ad_id}/?pt={token}"
     try:
@@ -198,14 +137,6 @@ def get_phone(ad_url: str) -> str:
 
 
 def gather_data_and_parse(city: str, category: str, limit: int = 1) -> list:
-    """
-    Основная функция для сбора данных с OLX.kz.
-
-    1. Сначала собирает ссылки на объявления через функцию gather_links.
-    2. Если ссылки не найдены для указанного региона, выполняется поиск по всей стране.
-    3. Для каждой ссылки вызывается parse_ad_page, затем дополнительно извлекается номер телефона.
-    4. Результат – список словарей, где каждый словарь содержит полную информацию об объявлении.
-    """
     links = gather_links(city, category, limit)
     if not links:
         print(f"[ERROR] CATEGORY {category.upper()} IN {city.upper()} DON'T HAVE ANY DATA")
@@ -229,25 +160,186 @@ def gather_data_and_parse(city: str, category: str, limit: int = 1) -> list:
     return dataset
 
 
+def selenium_parse_ads(url, limit_pages=1) -> tuple:
+    html = get_rendered_page(url)
+    ads = parse_ads_from_page(html)
+    result_text = f"Найдено {len(ads)} объявлений.\n\n"
+    for ad in ads:
+        result_text += (
+            f"Название: {ad['Название']}\n"
+            f"Цена: {ad['Цена']}\n"
+            f"Описание: {ad['Описание']}\n"
+            f"Телефон: {ad['Телефон']}\n"
+            f"Ссылка: {ad['Ссылка']}\n"
+            f"Фото: {ad['Фото']}\n\n"
+        )
+    return result_text, ads
+
+
+def get_rendered_page(url, wait_time=30):
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.common.by import By  # Для селекторов
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.common.exceptions import TimeoutException
+
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.get(url)
+    try:
+        WebDriverWait(driver, wait_time).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "[data-cy='l-card']"))
+        )
+    except Exception as e:
+        print(f"TimeoutException: Элемент [data-cy='l-card'] не найден на {url}. Используем полученный HTML.")
+    time.sleep(2)
+    html = driver.page_source
+    driver.quit()
+    return html
+
+
+def parse_ads_from_page(page_html):
+    soup = BeautifulSoup(page_html, 'lxml')
+    ads = []
+    cards = soup.find_all("div", {"data-cy": "l-card"})
+    if not cards:
+        title = "Нет заголовка"
+        price = "Нет цены"
+        description = "Нет описания"
+        detail_title = soup.find("div", {"data-cy": "ad_title"})
+        if detail_title:
+            h4 = detail_title.find("h4")
+            if h4 and h4.get_text(strip=True):
+                title = h4.get_text(strip=True)
+        detail_price = soup.find("div", {"data-testid": "ad-price-container"})
+        if detail_price:
+            h3 = detail_price.find("h3", {"class": "css-fqcbii"})
+            if h3 and h3.get_text(strip=True):
+                price = h3.get_text(strip=True)
+        detail_desc = soup.find("div", {"data-cy": "ad_description"})
+        if detail_desc:
+            desc_div = detail_desc.find("div", {"class": "css-19duwlz"})
+            if desc_div and desc_div.get_text(strip=True):
+                description = desc_div.get_text(separator="\n", strip=True)
+        img_tag = soup.find("img")
+        image = img_tag.get("src") if img_tag and img_tag.get("src") else "Нет фото"
+        phone = "Нет телефона"
+        link = "Нет ссылки"
+        ads.append({
+            "Название": title,
+            "Цена": price,
+            "Описание": description,
+            "Телефон": phone,
+            "Ссылка": link,
+            "Фото": image
+        })
+        return ads
+
+    for card in cards:
+        try:
+            title_tag = (card.find("h4", {"class": "css-10ofhqw"}) or
+                         card.find("h1") or
+                         card.find("h3", {"class": "css-10ofhqw"}) or
+                         card.find("span", {"class": "css-10ofhqw"}) or
+                         card.find("a", {"class": "css-10ofhqw"}))
+            title = title_tag.get_text(strip=True) if title_tag and title_tag.get_text(strip=True) else "Нет заголовка"
+            if title == "Нет заголовка":
+                detail_title = card.find("div", {"data-testid": "ad_title"})
+                if detail_title:
+                    h4 = detail_title.find("h4")
+                    if h4 and h4.get_text(strip=True):
+                        title = h4.get_text(strip=True)
+            price_tag = (card.find("h3", {"class": "css-fqcbii"}) or
+                         card.find("p", {"class": "price"}) or
+                         card.find("span", {"class": "price"}))
+            price = price_tag.get_text(strip=True) if price_tag and price_tag.get_text(strip=True) else "Нет цены"
+            desc_tag = (card.find("div", {"class": "css-19duwlz"}) or
+                        card.find("div", {"class": "description"}) or
+                        card.find("p", {"class": "description"}))
+            description = desc_tag.get_text(separator="\n", strip=True) if desc_tag and desc_tag.get_text(strip=True) else "Нет описания"
+            phone_tag = (card.find("a", {"data-testid": "contact-phone", "class": "css-v1ndtc"}) or
+                         card.find("span", {"class": "phone"}))
+            phone = phone_tag.get_text(strip=True) if phone_tag and phone_tag.get_text(strip=True) else "Нет телефона"
+            link_tag = card.find("a", href=True)
+            link = link_tag["href"] if link_tag and link_tag.get("href") else "Нет ссылки"
+            if link.startswith("/"):
+                link = urljoin(BASE_URL, link)
+            img_tag = card.find("img")
+            image = img_tag.get("src") if img_tag and img_tag.get("src") else "Нет фото"
+            ads.append({
+                "Название": title,
+                "Цена": price,
+                "Описание": description,
+                "Телефон": phone,
+                "Ссылка": link,
+                "Фото": image
+            })
+        except Exception as ex:
+            print(f"Ошибка парсинга товара: {ex}")
+    return ads
+
+
+def run_selenium_search_parser(query: str) -> tuple:
+    query_encoded = quote(query)
+    url = f"{BASE_URL}/list/q-{query_encoded}/"
+    return selenium_parse_ads(url)
+
+
+def run_selenium_parser(category_code, region_code, subcategory_code) -> tuple:
+    if category_code == "nedvizhimost":
+        subcat_url = subcategory_code.replace("_", "-")
+        url = f"{BASE_URL}/{category_code}/{region_code}/{subcat_url}/"
+    elif category_code == "stroitelstvo-remont":
+        subcat_url = subcategory_code.replace("_", "-").replace("j", "y")
+        url = f"{BASE_URL}/{category_code}/{subcat_url}/{region_code}/"
+    else:
+        url = f"{BASE_URL}/{category_code}/{region_code}/{subcategory_code}/"
+    print(f"[SELENIUM] Парсинг URL: {url}")
+    result_text, ads = selenium_parse_ads(url)
+    if not ads or all(ad["Название"] == "Нет заголовка" for ad in ads):
+        print("Fallback: объявления не найдены или заголовки не извлечены, выполняем поиск по запросу.")
+        fallback_query = subcategory_code
+        if category_code == "uslugi" and subcategory_code == "perevozki-i-skladskie-uslugi":
+            fallback_query = "перевозки"
+        result_text, ads = run_selenium_search_parser(fallback_query)
+    return result_text, ads
+
+
 def run_parser(category_code, city_code, subcategory_code=None):
-    """
-    Основной синхронный парсер для OLX.kz по выбранной категории, региону и подкатегории.
-    Если подкатегория не передана, используется значение "all".
-    Объединяет категорию и подкатегорию через символ "/" и вызывает функцию gather_data_and_parse.
-    Возвращает список объявлений.
-    """
     if subcategory_code is None:
         subcategory_code = "all"
     composite_category = f"{category_code}/{subcategory_code}"
     return gather_data_and_parse(city_code, composite_category, limit=5)
 
 
+def split_text(text: str, max_length: int = 4096) -> list:
+    return [text[i:i + max_length] for i in range(0, len(text), max_length)]
+
+
 if __name__ == "__main__":
-    # Пример вызова для теста: для категории "prokat_tovarov/avto" в регионе "zhm" (Жамбылская)
-    city = "zhm"
-    category = "prokat_tovarov"
-    subcategory = "avto"
-    ads = gather_data_and_parse(city, f"{category}/{subcategory}", limit=1)
-    print("Итоговые данные:")
-    for ad in ads:
-        print(ad)
+    from config.subcategories import SUBCATEGORY_MAPPING_FULL
+
+    default_region = {
+        "nedvizhimost": "kus",
+        "uslugi": "zhetisu"
+    }
+    for category, subcats in SUBCATEGORY_MAPPING_FULL.items():
+        region = default_region.get(category, "zhm")
+        print(f"\n{'='*40}\nТест для категории: {category.upper()}, регион: {region}\n{'='*40}")
+        for subcategory, subcat_name in subcats.items():
+            if subcategory == "all":
+                continue
+            print(f"\n--- Тест для подкатегории: {subcat_name} (slug: {subcategory}) ---")
+            composite_category = f"{category}/{subcategory}"
+            ads = gather_data_and_parse(region, composite_category, limit=1)
+            if ads:
+                print("Итоговые данные:")
+                for ad in ads:
+                    print(ad)
+            else:
+                print("Объявления не найдены.")
+            print("-" * 50)
