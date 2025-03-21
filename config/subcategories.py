@@ -1,183 +1,199 @@
-# Словарь с полным списком подкатегорий для категорий
-# Ключ – код категории (например, 'stroitelstvo_remont' для "Строительство и ремонт")
-# Значение – словарь, где:
-#   - ключ 'all' соответствует варианту "Посмотреть все объявления в <название категории>"
-#   - остальные ключи – коды подкатегорий, а значения – отображаемые названия.
+# config/subcategories.py
+
 SUBCATEGORY_MAPPING_FULL = {
-    "stroitelstvo_remont": {
-        "all": "Посмотреть все объявления в Строительство и ремонт",
-        "santehnika": "Сантехника",
-        "instrumenty_oborudovanie": "Инструменты и оборудование",
-        "otdelochnye_materialy": "Отделочные и облицовочные материалы",
-        "okna_dveri": "Окна / двери / балконы / зеркала",
-        "pilomaterialy": "Пиломатериалы",
-        "elektrika": "Электрика",
-        "otoplenie": "Отопление",
-        "stroitelnie_smesi": "Строительные смеси",
-        "krovlja": "Кровля",
-        "kladochnie_materialy": "Кладочные материалы",
-        "stroitelnoe_oborudovanie": "Строительное оборудование",
-        "elementy_krepeja": "Элементы крепежа",
-        "metalloprokati": "Металлопрокат / арматура",
-        "schetchiki": "Счетчики",
-        "stroitelnaia_khimia": "Строительная химия",
-        "zhelezobeton": "Железобетонные изделия",
-        "dorozhnye_materialy": "Дорожные материалы",
-        "lakokrasochnye_materialy": "Лакокрасочные материалы",
-        "pesok_shcheben": "Песок, щебень, отсев",
-        "ventilyacia": "Вентиляция",
-        "prochie_tovary": "Прочие товары для строительства и ремонта"
-    },
-    "prokat_tovarov": {
-        "all": "Посмотреть все объявления в Аренда и прокат товаров",
-        "spec_tehnika": "Аренда и услуги спецтехники",
-        "instrumenty_oborudovanie": "Аренда инструментов и оборудования",
-        "transport": "Аренда транспортных средств",
-        "avto": "Аренда авто",
-        "meropriyatiya": "Аренда товаров для мероприятий и отдыха",
-        "elektronika": "Прокат электроники",
-        "detskie_tovary": "Аренда детских товаров",
-        "prochie_tovary": "Аренда прочих товаров"
+    "uslugi": {
+         "all": "Посмотреть все объявления в Услуги",
+         "razvlecheniya": "Развлечения",                           # href: /uslugi/razvlecheniya/
+         "krasota-i-zdorove": "Красота и здоровье",               # href: /uslugi/krasota-i-zdorove/
+         "dlya-biznesa": "Для бизнеса",                           # href: /uslugi/dlya-biznesa/
+         "avto-uslugi": "Автоуслуги",                             # href: /uslugi/avto-uslugi/
+         "bytovye-uslugi": "Бытовые услуги",                      # href: /uslugi/bytovye-uslugi/
+         "perevozki-i-skladskie-uslugi": "Перевозки и складские услуги",  # href: /uslugi/perevozki-i-skladskie-uslugi/
+         "remont-i-obsluzhivanie-tehniki": "Ремонт и обслуживание техники",  # href: /uslugi/remont-i-obsluzhivanie-tehniki/
+         "remont-i-stroitelstvo": "Ремонт и строительство",       # href: /uslugi/remont-i-stroitelstvo/
+         "uborka": "Уборка",                                      # href: /uslugi/uborka/
+         "obuchenie-kursy-repetitorstvo": "Обучение/курсы/репетиторство",  # href: /uslugi/obuchenie-kursy-repetitorstvo/
+         "ohrana-bezopasnost": "Охрана/безопасность",             # href: /uslugi/ohrana-bezopasnost/
+         "delovye-uslugi": "Деловые услуги",                      # href: /uslugi/delovye-uslugi/
+         "studii-zvukozapisi": "Студии звукозаписи",              # href: /uslugi/studii-zvukozapisi/
+         "foto-i-videosemka": "Фото и видеосъемка",               # href: /uslugi/foto-i-videosemka/
+         "turizm-immigratsiya": "Туризм/иммиграция",              # href: /uslugi/turizm-immigratsiya/
+         "setevoy-marketing": "Сетевой маркетинг",                # href: /uslugi/setevoy-marketing/
+         "uslugi-dlya-zhivotnyh": "Услуги для животных",          # href: /uslugi/uslugi-dlya-zhivotnyh/
+         "prochie-uslugi": "Прочие услуги"                        # href: /uslugi/prochie-uslugi/
     },
     "nedvizhimost": {
-        "all": "Посмотреть все объявления в Недвижимость",
-        "posutochnaya": "Посуточная аренда жилья",
-        "arenda_kvartir": "Аренда квартир долгосрочно",
-        "arenda_domov": "Аренда домов долгосрочно",
-        "arenda_komnat": "Аренда комнат долгосрочно",
-        "prodazha_kvartir": "Продажа квартир",
-        "zemlya": "Земля",
-        "prodazha_domov": "Продажа домов",
-        "kommercheskie": "Коммерческие помещения",
-        "prodazha_komnat": "Продажа комнат",
-        "garazhi": "Гаражи/стоянки",
-        "obmen": "Обмен",
-        "zarubezhnaya": "Зарубежная недвижимость"
+         "all": "Посмотреть все объявления в Недвижимость",
+         "arenda-kvartiry": "Аренда квартир",                     # href: /nedvizhimost/arenda-kvartiry/
+         "arenda-doma": "Аренда домов",                           # href: /nedvizhimost/arenda-doma/
+         "arenda-komnaty": "Аренда комнат",                       # href: /nedvizhimost/arenda-komnaty/
+         "zemlya": "Земля",                                      # href: /nedvizhimost/zemlya/
+         "prodazha-kvartiry": "Продажа квартир",                  # href: /nedvizhimost/prodazha-kvartiry/
+         "prodazha-doma": "Продажа домов",                        # href: /nedvizhimost/prodazha-doma/
+         "kommercheskie-pomeshcheniya": "Коммерческие помещения", # href: /nedvizhimost/kommercheskie-pomeshcheniya/
+         "prodazha-komnaty": "Продажа комнат",                    # href: /nedvizhimost/prodazha-komnaty/
+         "garazhi-stoyanki": "Гаражи и стоянки",                  # href: /nedvizhimost/garazhi-stoyanki/
+         "obmen": "Обмен",                                       # href: /nedvizhimost/obmen/
+         "zarubezhnaya-nedvizhimost": "Зарубежная недвижимость"    # href: /nedvizhimost/zarubezhnaya-nedvizhimost/
+    },
+    "stroitelstvo-remont": {
+         "all": "Посмотреть все объявления в Строительство и ремонт",
+         "instrumenty-oborudovanie": "Инструменты и оборудование",  # href: /stroitelstvo-remont/instrumenty-oborudovanie/
+         "otdelochnye-materialy": "Отделочные материалы",            # href: /stroitelstvo-remont/otdelochnye-oblitsovochnye-materialy/
+         "okna-dveri-balkony-zerkala": "Окна, двери, балконы, зеркала",  # href: /stroitelstvo-remont/okna-dveri-balkony-zerkala/
+         "otoplenie": "Отопление",                                  # href: /stroitelstvo-remont/otoplenie/
+         "pilomaterialy": "Пиломатериалы",                           # href: /stroitelstvo-remont/pilomaterialy/
+         "elektrika": "Электрика",                                  # href: /stroitelstvo-remont/elektrika/
+         "stroitelnye-smesi": "Строительные смеси",                 # href: /stroitelstvo-remont/stroitelnye-smesi/
+         "krovlya": "Кровля",                                       # href: /stroitelstvo-remont/krovlya/
+         "kladochnye-materialy": "Кладочные материалы",             # href: /stroitelstvo-remont/kladochnye-materialy/
+         "stroitelnoe-oborudovanie": "Строительное оборудование",   # href: /stroitelstvo-remont/stroitelnoe-oborudovanie/
+         "elementy-krepezha": "Элементы крепежа",                   # href: /stroitelstvo-remont/elementy-krepezha/
+         "metalloprokat-armatura": "Металлопрокат, арматура",        # href: /stroitelstvo-remont/metalloprokat-armatura/
+         "schetchiki": "Счетчики",                                  # href: /stroitelstvo-remont/schetchiki/
+         "stroitelnaya-himiva": "Строительная химия",               # href: /stroitelstvo-remont/stroitelnaya-himiva/
+         "zhelezobetonnye-izdeliya": "Железобетонные изделия",       # href: /stroitelstvo-remont/zhelezobetonnye-izdeliya/
+         "dorozhnye-materialy": "Дорожные материалы",               # href: /stroitelstvo-remont/dorozhnye-materialy/
+         "lakokrasochnye-materialy": "Лакокрасочные материалы",      # href: /stroitelstvo-remont/lakokrasochnye-materialy/
+         "pesok-shcheben-otsev": "Песок, щебень, отстой",             # href: /stroitelstvo-remont/pesok-shcheben-otsev/
+         "ventilyatsiya": "Вентиляция",                             # href: /stroitelstvo-remont/ventilyatsiya/
+         "prochie-tovary": "Прочие товары"                         # href: /stroitelstvo-remont/prochie-tovary/
+    },
+    "prokat-tovarov": {
+         "all": "Посмотреть все объявления в Аренда и прокат товаров",
+         "instrumenty-i-oborudovanie": "Инструменты и оборудование",  # href: /prokat-tovarov/instrumenty-i-oborudovanie/
+         "transport": "Транспорт",                                # href: /prokat-tovarov/transport/
+         "avto": "Аренда авто",                                   # href: /prokat-tovarov/avto/
+         "tovary-dlya-meroprivatiy": "Товары для мероприятий",      # href: /prokat-tovarov/tovary-dlya-meroprivatiy/
+         "elektronika": "Электроника",                            # href: /prokat-tovarov/elektronika/
+         "detskie-tovary": "Детские товары",                      # href: /prokat-tovarov/detskie-tovary/
+         "prochie-tovary": "Прочие товары"                        # href: /prokat-tovarov/prochie-tovary/
     },
     "elektronika": {
-        "all": "Посмотреть все объявления в Электроника",
-        "telefony": "Телефоны и аксессуары",
-        "kompyutery": "Компьютеры и комплектующие",
-        "foto_video": "Фото / видео",
-        "tv": "Тв / видеотехника",
-        "audio": "Аудиотехника",
-        "igry": "Игры и игровые приставки",
-        "planshety": "Планшеты / эл. книги и аксессуары",
-        "noutbuki": "Ноутбуки и аксессуары",
-        "tehnika_dlya_doma": "Техника для дома",
-        "tehnika_dlya_kukhni": "Техника для кухни",
-        "klimat": "Климатическое оборудование",
-        "individualnyy_ukhod": "Индивидуальный уход",
-        "aksessuary": "Аксессуары и комплектующие",
-        "prochaya_elektronika": "Прочая электроника",
-        "remont_tehniki": "Ремонт и обслуживание техники"
+         "all": "Посмотреть все объявления в Электроника",
+         "kompyutery-i-komplektuyuschie": "Компьютеры и комплектующие",  # href: /elektronika/kompyutery-i-komplektuyuschie/
+         "foto-video": "Фото/видео",                              # href: /elektronika/foto-video/
+         "tv-videotehnika": "TV/видеотехника",                    # href: /elektronika/tv-videotehnika/
+         "audiotehnika": "Аудиотехника",                          # href: /elektronika/audiotehnika/
+         "igry-i-igrovye-pristavki": "Игры и игровые приставки",  # href: /elektronika/igry-i-igrovye-pristavki/
+         "planshety-el-knigi-i-aksessuary": "Планшеты, e-книги и аксессуары",  # href: /elektronika/planshety-el-knigi-i-aksessuary/
+         "noutbuki-i-aksesuary": "Ноутбуки и аксессуары",          # href: /elektronika/noutbuki-i-aksesuary/
+         "tehnika-dlya-doma": "Техника для дома",                # href: /elektronika/tehnika-dlya-doma/
+         "tehnika-dlya-kuhni": "Техника для кухни",              # href: /elektronika/tehnika-dlya-kuhni/
+         "klimaticheskoe-oborudovanie": "Климатическое оборудование",  # href: /elektronika/klimaticheskoe-oborudovanie/
+         "individualnyy-uhod": "Индивидуальный уход",            # href: /elektronika/individualnyy-uhod/
+         "aksessuary-i-komplektuyuschie": "Аксессуары и комплектующие",  # href: /elektronika/aksessuary-i-komplektuyuschie/
+         "prochaya-electronika": "Прочая электроника"             # href: /elektronika/prochaya-electronika/
     },
-    "dom_i_sad": {
-        "all": "Посмотреть все объявления в Дом и сад",
-        "kanc_tovary": "Канцтовары / расходные материалы",
-        "mebel": "Мебель",
-        "produkty": "Продукты питания / напитки",
-        "predmety_interera": "Предметы интерьера",
-        "komnatnye_rasteniya": "Комнатные растения",
-        "posuda": "Посуда / кухонная утварь",
-        "sadovy_inventar": "Садовый инвентарь",
-        "sad_ogorod": "Сад / огород",
-        "hozyainstvennyye": "Хозяйственный инвентарь/бытовая химия",
-        "prochie_tovary": "Прочие товары для дома"
+    "dom-i-sad": {
+         "all": "Посмотреть все объявления в Дом и сад",
+         "mebel": "Мебель",                                      # href: /dom-i-sad/mebel/
+         "produkty-pitaniya-napitki": "Продукты питания и напитки",# href: /dom-i-sad/produkty-pitaniya-napitki/
+         "predmety-interera": "Предметы интерьера",               # href: /dom-i-sad/predmety-interera/
+         "komnatnye-rasteniya": "Комнатные растения",            # href: /dom-i-sad/komnatnye-rasteniya/
+         "posuda-kuhonnaya-utvar": "Посуда, кухонная утварь",      # href: /dom-i-sad/posuda-kuhonnaya-utvar/
+         "sadovyy-inventar": "Садовый инвентарь",                 # href: /dom-i-sad/sadovyy-inventar/
+         "sad-ogorod": "Сад/огород",                              # href: /dom-i-sad/sad-ogorod/
+         "hozyaystvennyy-inventar": "Хозяйственный инвентарь",     # href: /dom-i-sad/hozyaystvennyy-inventar/
+         "prochie-tovary-dlya-doma": "Прочие товары для дома"      # href: /dom-i-sad/prochie-tovary-dlya-doma/
     },
     "rabota": {
-        "all": "Посмотреть все объявления в Работа",
-        "roznichnaya": "Розничная торговля / продажи / закупки",
-        "transport_logistika": "Транспорт / Логистика / Склад",
-        "stroitelstvo_otdelochnye": "Строительство / Отделочные работы",
-        "arhitektura": "Архитектура",
-        "banki_finansy": "Банки / Финансы / Страхование",
-        "finansy_bukhgalteriya": "Финансы / бухгалтерия / экономика",
-        "yuristy": "Юристы / адвокаты / нотариусы",
-        "okhrana": "Охрана / безопасность",
-        "domashniy_personal": "Домашний персонал / Сервис и быт",
-        "krasota_fitnes": "Красота / фитнес / спорт",
-        "gostinitsy": "Гостиницы / туризм / отдых",
-        "bary_restorany": "Бары / рестораны / кафе",
-        "obrazovanie": "Образование / Наука / Перевод",
-        "kulturnoe_iskusstvo": "Культура / искусство / развлечения",
-        "medicina": "Медицина / фармацевтика",
-        "internet_it": "Интернет / IT / компьютеры / телекоммуникации",
-        "marketing": "Маркетинг / Реклама / PR",
-        "proizvodstvo": "Производство / Рабочие специальности",
-        "administrativny": "Административный персонал",
-        "hr": "HR / Управление персоналом",
-        "stalazh": "Начало карьеры / стажировка / практика",
-        "sto": "СТО / автомойки",
-        "top_menedzhment": "Топ-менеджмент / руководство высшего звена",
-        "selhoz": "Сельское и лесное хозяйство / Агробизнес / Животноводство",
-        "rabota_za_rubezhom": "Работа за рубежом",
-        "inzhener": "Инженеры",
-        "klientskiy_servis": "Клиентский сервис",
-        "drugie_sfery": "Другие сферы деятельности"
+         "all": "Посмотреть все объявления в Работа",
+         "transport-logistika": "Транспорт/логистика",           # href: /rabota/transport-logistika/
+         "stroitelstvo-arkhitektura": "Строительство/архитектура",# href: /rabota/stroitelstvo-arkhitektura/
+         "nedvizhimost": "Недвижимость",                          # href: /rabota/nedvizhimost/
+         "finansy-bukhgalteriya-ekonomika": "Финансы/бухгалтерия/экономика",  # href: /rabota/finansy-bukhgalteriya-ekonomika/
+         "banki-strakhovaniye": "Банки/страхование",              # href: /rabota/banki-strakhovaniye/
+         "yuristy-advokaty-notariusy": "Юристы/адвокаты/нотариусы",# href: /rabota/yuristy-advokaty-notariusy/
+         "ohrana-bezopasnost": "Охрана/безопасность",             # href: /rabota/ohrana-bezopasnost/
+         "domashniy-personal": "Домашний персонал",               # href: /rabota/domashniy-personal/
+         "krasota-fitnes-sport": "Красота/фитнес/спорт",          # href: /rabota/krasota-fitnes-sport/
+         "gostinitsy-turizm-otdykh": "Гостиницы/туризм/отдых",     # href: /rabota/gostinitsy-turizm-otdykh/
+         "bary-restorany-kafe": "Бары/рестораны/кафе",            # href: /rabota/bary-restorany-kafe/
+         "obrazovaniye-nauka": "Образование/наука",                # href: /rabota/obrazovaniye-nauka/
+         "kultura-iskussivo-razvlechenie": "Культура/искусство/развлечения",  # href: /rabota/kultura-iskussivo-razvlechenie/
+         "meditsina-farmatsevtika": "Медицина/фармацевтика",      # href: /rabota/meditsina-farmatsevtika/
+         "internet-it-telekom": "Интернет/IT/телеком",            # href: /rabota/internet-it-telekom/
+         "marketing-reklama-pr": "Маркетинг/реклама/PR",          # href: /rabota/marketing-reklama-pr/
+         "proizvodstva-energetika": "Производства/энергетика",     # href: /rabota/proizvodstva-energetika/
+         "administrativnyy-personal": "Административный персонал",  # href: /rabota/administrativnyy-personal/
+         "hr-upravleniye-personalom-treningi": "HR/управление персоналом/тренинги",  # href: /rabota/hr-upravleniye-personalom-treningi/
+         "nachalo-karyery-stazhirovka-praktika": "Начало карьеры/стажировки/практика",  # href: /rabota/nachalo-karyery-stazhirovka-praktika/
+         "sto-avtomoyki-servisnoye-obsluzhivaniye": "СТО/автомойки/сервисное обслуживание",  # href: /rabota/sto-avtomoyki-servisnoye-obsluzhivaniye/
+         "top-menedzhment": "Топ-менеджмент",                     # href: /rabota/top-menedzhment/
+         "selskoe-khozyaystvo-agrobiznes": "Сельское хозяйство/агробизнес",  # href: /rabota/selskoe-khozyaystvo-agrobiznes/
+         "rabota-za-rubezhom": "Работа за рубежом",               # href: /rabota/rabota-za-rubezhom/
+         "inzhener": "Инженеры",                                  # href: /rabota/inzhener/
+         "klientskiy-servis": "Клиентский сервис",                # href: /rabota/klientskiy-servis/
+         "drugiye-sfery-deyatelnosti": "Другие сферы деятельности" # href: /rabota/drugiye-sfery-deyatelnosti/
     },
-    "moda_i_stil": {
-        "all": "Посмотреть все объявления в Мода и стиль",
-        "zhenskaya_odezhda": "Женская одежда",
-        "zhenskoe_bele": "Женское белье, купальники",
-        "zhenskaya_obuv": "Женская обувь",
-        "beremennye": "Одежда для беременных",
-        "muzhskaya_odezhda": "Мужская одежда",
-        "golovnie_ubory": "Головные уборы",
-        "muzhskaya_obuv": "Мужская обувь",
-        "muzhskoye_bele": "Мужское белье и плавки",
-        "svadba": "Для свадьбы",
-        "moda_raznoe": "Мода разное",
-        "aksessuary": "Аксессуары",
-        "naruchnye_chasy": "Наручные часы",
-        "podarki": "Подарки",
-        "tovary_dlya_krasoty": "Товары для красоты и здоровья",
-        "specodezhda": "Спецодежда и спецобувь"
+    "moda-i-stil": {
+         "all": "Посмотреть все объявления в Мода и стиль",
+         "zhenskoe-bele-kupalniki": "Женское белье и купальники",  # href: /moda-i-stil/zhenskoe-bele-kupalniki/
+         "zhenskaya-obuv": "Женская обувь",                       # href: /moda-i-stil/zhenskaya-obuv/
+         "odezhda-dlya-beremennyh": "Одежда для беременных",       # href: /moda-i-stil/odezhda-dlya-beremennyh/
+         "muzhskaya-odezhda": "Мужская одежда",                   # href: /moda-i-stil/muzhskaya-odezhda/
+         "golovnye-ubory": "Головные уборы",                     # href: /moda-i-stil/golovnye-ubory/
+         "muzhskoe-bele-plavki": "Мужское белье и плавки",         # href: /moda-i-stil/muzhskoe-bele-plavki/
+         "dlya-svadby": "Для свадьбы",                           # href: /moda-i-stil/dlya-svadby/
+         "moda-raznoe": "Мода разное",                           # href: /moda-i-stil/moda-raznoe/
+         "aksessuary": "Аксессуары",                             # href: /moda-i-stil/aksessuary/
+         "naruchnye-chasy": "Наручные часы",                     # href: /moda-i-stil/naruchnye-chasy/
+         "podarki": "Подарки",                                  # href: /moda-i-stil/podarki/
+         "krasota-zdorove": "Красота и здоровье",               # href: /moda-i-stil/krasota-zdorove/
+         "spetsodezhda-i-spetsobuv": "Спецодежда и спецобувь"      # href: /moda-i-stil/spetsodezhda-i-spetsobuv/
     },
-    "detskiy_mir": {
-        "all": "Посмотреть все объявления в Детский мир",
-        "detskaya_odezhda": "Детская одежда",
-        "detskaya_obuv": "Детская обувь",
-        "detskie_kolyaski": "Детские коляски",
-        "detskie_avtokresla": "Детские автокресла",
-        "detskaya_mebel": "Детская мебель",
-        "igrushki": "Игрушки",
-        "detskiy_transport": "Детский транспорт",
-        "tovary_dlya_kormleniya": "Товары для кормления",
-        "tovary_dlya_shkolnikov": "Товары для школьников",
-        "prochie_detskie": "Прочие детские товары"
+    "detskiy-mir": {
+         "all": "Посмотреть все объявления в Детский мир",
+         "detskaya-odezhda": "Детская одежда",                    # href: /detskiy-mir/detskaya-odezhda/
+         "detskaya-obuv": "Детская обувь",                        # href: /detskiy-mir/detskaya-obuv/
+         "detskie-kolyaski": "Детские коляски",                   # href: /detskiy-mir/detskie-kolyaski/
+         "detskie-avtokresla": "Детские автокресла",              # href: /detskiy-mir/detskie-avtokresla/
+         "detskaya-mebel": "Детская мебель",                     # href: /detskiy-mir/detskaya-mebel/
+         "igrushki": "Игрушки",                                  # href: /detskiy-mir/igrushki/
+         "detskiy-transport": "Детский транспорт",               # href: /detskiy-mir/detskiy-transport/
+         "tovary-dlya-kormleniya": "Товары для кормления",        # href: /detskiy-mir/tovary-dlya-kormleniya/
+         "tovary-dlya-shkolnikov": "Товары для школьников",       # href: /detskiy-mir/tovary-dlya-shkolnikov/
+         "prochie-detskie": "Прочие детские товары"              # href: /detskiy-mir/prochie-detskie/
     },
-    "hobbi_otdyh_sport": {
-        "all": "Посмотреть все объявления в Хобби, отдых и спорт",
-        "antikvariat": "Антиквариат / коллекции",
-        "muzykalnye_instrumenty": "Музыкальные инструменты",
-        "drugoe": "Другое",
-        "sport_otdyh": "Спорт / отдых",
-        "knigi_jurnaly": "Книги / журналы",
-        "cd_dvd": "CD / DVD / пластинки / кассеты",
-        "bilety": "Билеты",
-        "poputchiki": "Поиск попутчиков",
-        "gruppa_muzykantov": "Поиск групп / музыкантов"
+    "hobbi-otdyh-i-sport": {
+         "all": "Посмотреть все объявления в Хобби, отдых и спорт",
+         "muzykalnye-instrumenty": "Музыкальные инструменты",    # href: /hobbi-otdyh-i-sport/muzykalnye-instrumenty/
+         "drugoe": "Другое",                                    # href: /hobbi-otdyh-i-sport/drugoe/
+         "sport-otdyh": "Спорт и отдых",                         # href: /hobbi-otdyh-i-sport/sport-otdyh/
+         "knigi-zhurnaly": "Книги и журналы",                    # href: /hobbi-otdyh-i-sport/knigi-zhurnaly/
+         "cd-dvd-plastinki": "CD/DVD/пластинки",                 # href: /hobbi-otdyh-i-sport/cd-dvd-plastinki/
+         "bilety": "Билеты",                                    # href: /hobbi-otdyh-i-sport/bilety/
+         "poisk-poputchikov": "Поиск попутчиков",                # href: /hobbi-otdyh-i-sport/poisk-poputchikov/
+         "poisk-grupp-muzykantov": "Поиск групп музыкантов",      # href: /hobbi-otdyh-i-sport/poisk-grupp-muzykantov/
+         "antikvariat-kollektsii": "Антиквариат/коллекции"        # href: /hobbi-otdyh-i-sport/antikvariat-kollektsii/
     },
-    "uslugi": {
-        "all": "Посмотреть все объявления в Услуги",
-        "razvlecheniya": "Развлечения",
-        "krasota_i_zdorove": "Красота и здоровье",
-        "dlya_biznesa": "Для бизнеса",
-        "avto_uslugi": "Автоуслуги",
-        "bytovye_uslugi": "Бытовые услуги",
-        "perevozki_skladskie_uslugi": "Перевозки и складские услуги",
-        "remont_obsluzhivanie_tehniki": "Ремонт и обслуживание техники",
-        "remont_i_stroitelstvo": "Ремонт и строительство",
-        "uborka": "Уборка",
-        "okhrana_bezopasnost": "Охрана / безопасность",
-        "delovye_uslugi": "Деловые услуги",
-        "obuchenie_kursy_repetitorstvo": "Обучение / курсы / репетиторство",
-        "studiya_zvukozapisi": "Студии звукозаписи",
-        "foto_video": "Фото- и видеосъемка",
-        "turizm_imigratsiya": "Туризм / иммиграция",
-        "setevoy_marketing": "Сетевой маркетинг",
-        "uslugi_dlya_zhivotnyh": "Услуги для животных",
-        "prochie_uslugi": "Прочие услуги"
+    "transport": {
+         "all": "Посмотреть все объявления в Транспорт",
+         "avtozaochasti-i-aksessuary": "Автозапчасти и аксессуары",  # href: /transport/avtozaochasti-i-aksessuary/
+         "shiny-diski-i-kolesa": "Шины, диски и колёса",           # href: /transport/shiny-diski-i-kolesa/
+         "moto": "Мото",                                         # href: /transport/moto/
+         "avtobusy": "Автобусы",                                 # href: /transport/avtobusy/
+         "vodnyy-transport": "Водный транспорт",                  # href: /transport/vodnyy-transport/
+         "gruzovye-avtomobili": "Грузовые автомобили",            # href: /transport/gruzovye-avtomobili/
+         "pritsepy": "Прицепы",                                  # href: /transport/pritsepy/
+         "spetstehnika": "Спецтехника",                           # href: /transport/spetstehnika/
+         "selhoztehnika": "Сельхозтехника",                       # href: /transport/selhoztehnika/
+         "vozdushnyy-transport": "Воздушный транспорт",           # href: /transport/vozdushnyy-transport/
+         "drugoy-transport": "Другой транспорт"                  # href: /transport/drugoy-transport/
+    },
+    "zhivotnye": {
+         "all": "Посмотреть все объявления в Животные",
+         "sobaki": "Собаки",                                     # href: /zhivotnye/sobaki/
+         "koshki": "Кошки",                                     # href: /zhivotnye/koshki/
+         "akvariumnye-rybki": "Аквариумные рыбки",               # href: /zhivotnye/akvariumnye-rybki/
+         "ptitsy": "Птицы",                                     # href: /zhivotnye/ptitsy/
+         "reptilii": "Рептилии",                                 # href: /zhivotnye/reptilii/
+         "gryzuny": "Грызуны",                                   # href: /zhivotnye/gryzuny/
+         "zhivotnye-darom": "Отдам даром",                      # href: /zhivotnye/zhivotnye-darom/
+         "tovary-dlya-zhivotnyh": "Товары для животных"          # href: /zhivotnye/tovary-dlya-zhivotnyh/
+    },
+    "otdam-darom": {
+         "all": "Посмотреть все объявления в Отдам даром"       # href: /otdam-darom/
     }
 }
