@@ -1,78 +1,68 @@
+import asyncio
 from aiogram import Router, types
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from utils.selenium_parser import run_selenium_search_parser, split_text
+from handlers.start_handler import build_main_menu
 
 search_router = Router()
 
 class SearchStates(StatesGroup):
-    waiting_for_query = State()
+    waiting_for_search_query = State()
 
-@search_router.message(Command("search"))
-async def search_command(message: types.Message, state: FSMContext):
-    await message.answer("Введите запрос для поиска:")
-    await state.set_state(SearchStates.waiting_for_query)
+def build_search_menu() -> types.InlineKeyboardMarkup:
+    keyboard = [
+        [types.InlineKeyboardButton(text="Поиск по названию", callback_data="search")]
+    ]
+    return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
 
-@search_router.message(SearchStates.waiting_for_query)
+async def send_search_ads_batch(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    ads = data.get("ads", [])
+    current_index = data.get("current_index", 0)
+    batch = ads[current_index:current_index+5]
+    for ad in batch:
+        text = (
+            f"Название: {ad['Название']}\n"
+            f"Цена: {ad['Цена']}\n"
+            f"Описание: {ad['Описание']}\n"
+            f"Телефон: {ad['Телефон']}\n"
+            f"Ссылка: {ad['Ссылка']}"
+        )
+        if ad["Фото"] and ad["Фото"].strip() and ad["Фото"].startswith("http"):
+            await message.answer_photo(photo=ad["Фото"], caption=text)
+        else:
+            await message.answer(text)
+    current_index += len(batch)
+    await state.update_data(current_index=current_index)
+    if current_index < len(ads):
+        keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+            [types.InlineKeyboardButton(text="Продолжить", callback_data="next_search_ads")]
+        ])
+        await message.answer("Нажмите 'Продолжить' для следующих объявлений", reply_markup=keyboard)
+    else:
+        await message.answer("Все объявления отправлены.")
+        keyboard = build_main_menu("Не выбран")
+        await message.answer("Главное меню:", reply_markup=keyboard)
+
+@search_router.callback_query(lambda c: c.data == "search")
+async def search_prompt(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer("Введите название для поиска:")
+    await state.set_state(SearchStates.waiting_for_search_query)
+
+@search_router.message(SearchStates.waiting_for_search_query)
 async def process_search(message: types.Message, state: FSMContext):
     query = message.text.strip()
-    BASE_URL = "https://www.olx.kz"
-    search_url = f"{BASE_URL}/?q={query}"
-    response = requests.get(search_url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'})
-    soup = BeautifulSoup(response.text, 'lxml')
-    results = soup.find_all("div", {"data-cy": "l-card"})
-    if not results:
-        keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-            [types.InlineKeyboardButton(text="Вся страна", callback_data="all_country")]
-        ])
-        await message.answer("Ничего не найдено для вашего региона. Попробуйте поиск по всей стране.", reply_markup=keyboard)
-    else:
-        reply = f"Найдено {len(results)} результатов.\n\n"
-        for card in results[:5]:
-            try:
-                title_tag = card.find("h6")
-                title = title_tag.text.strip() if title_tag else "Нет заголовка"
-                link_tag = card.find("a")
-                link = link_tag.get("href") if link_tag else "Нет ссылки"
-                if link and link.startswith("/"):
-                    link = urljoin(BASE_URL, link)
-                reply += f"Название: {title}\nСсылка: {link}\n\n"
-            except Exception:
-                continue
-        await message.answer(reply)
+    await message.answer(f"Поиск по запросу '{query}' запущен. Пожалуйста, подождите...")
+    result_text, ads_all = await asyncio.get_running_loop().run_in_executor(
+        None, run_selenium_search_parser, query
+    )
+    await state.update_data(ads=ads_all, current_index=0)
+    await send_search_ads_batch(message, state)
     await state.clear()
 
-@search_router.callback_query(lambda c: c.data == "all_country")
-async def process_all_country(callback: types.CallbackQuery, state: FSMContext):
-    BASE_URL = "https://www.olx.kz"
-    query = "автомат"  # Можно модифицировать, чтобы использовать сохранённый запрос
-    search_url = f"{BASE_URL}/list/q-{query}/"
-    response = requests.get(search_url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'})
-    soup = BeautifulSoup(response.text, 'lxml')
-    results = soup.find_all("div", {"data-cy": "l-card"})
-    reply = f"Найдено {len(results)} объявлений по запросу '{query}' по всей стране.\n\n"
-    for card in results[:5]:
-        try:
-            title_tag = card.find("h4", {"class": "css-10ofhqw"}) or card.find("h4")
-            title = title_tag.text.strip() if title_tag else "Нет заголовка"
-            price_tag = card.find("h3", {"class": "css-fqcbii"}) or card.find("p", {"class": "price"})
-            price = price_tag.text.strip() if price_tag else "Нет цены"
-            desc_tag = card.find("div", {"class": "css-19duwlz"})
-            description = desc_tag.get_text(separator="\n").strip() if desc_tag else "Нет описания"
-            phone_tag = card.find("a", {"data-testid": "contact-phone", "class": "css-v1ndtc"})
-            phone = phone_tag.text.strip() if phone_tag else "Нет телефона"
-            link_tag = card.find("a")
-            link = link_tag.get("href") if link_tag else "Нет ссылки"
-            if link and link.startswith("/"):
-                link = urljoin(BASE_URL, link)
-            reply += (
-                f"Название: {title}\nЦена: {price}\nОписание: {description}\n"
-                f"Телефон: {phone}\nСсылка: {link}\n\n"
-            )
-        except Exception:
-            continue
-    await callback.message.answer(reply)
+@search_router.callback_query(lambda c: c.data == "next_search_ads")
+async def next_search_ads(callback: types.CallbackQuery, state: FSMContext):
+    await send_search_ads_batch(callback.message, state)
     await callback.answer()
