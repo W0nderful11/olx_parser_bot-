@@ -1,25 +1,25 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
-import requests
 from urllib.parse import urljoin
-
+import requests
 from aiogram import Router, types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from utils.selenium_parser import run_selenium_parser, split_text, run_selenium_search_parser
+
+from utils.selenium_parser import run_selenium_parser, run_selenium_search_parser, split_text
 from handlers.start_handler import build_main_menu
 
 olx_parser_router = Router()
 
-# FSM-состояния для выбора региона, категории и подкатегории
+# FSM-состояния для выбора региона, категории, подкатегории и поиска
 class ParseStates(StatesGroup):
     waiting_for_region = State()
     waiting_for_category = State()
     waiting_for_subcategory = State()
     waiting_for_search_query = State()
 
-# Полный список регионов для OLX.kz
+# Словари регионов и категорий
 REGION_MAPPING = {
     "abay": "Абая",
     "akm": "Акмолинская",
@@ -53,7 +53,7 @@ CATEGORY_MAPPING = {
     "hobbi_otdyh_sport": "Хобби, отдых и спорт"
 }
 
-# Для подкатегорий используется отдельный словарь (например, для «uslugi»)
+# Импорт полного словаря подкатегорий
 from config.subcategories import SUBCATEGORY_MAPPING_FULL
 
 def build_inline_keyboard(options: dict, prefix: str, buttons_per_row: int = 2) -> types.InlineKeyboardMarkup:
@@ -90,14 +90,16 @@ async def send_ads_batch(message: types.Message, state: FSMContext):
     await state.update_data(current_index=current_index)
     if current_index < len(ads):
         keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-            [types.InlineKeyboardButton(text="Продолжить", callback_data="next_ads")]
+            [types.InlineKeyboardButton(text="Далее", callback_data="next_ads")]
         ])
-        await message.answer("Нажмите 'Продолжить' для следующих объявлений", reply_markup=keyboard)
+        await message.answer("Нажмите 'Далее' для следующих объявлений", reply_markup=keyboard)
     else:
         await message.answer("Все объявления отправлены.")
         user_region = REGION_MAPPING.get((await state.get_data()).get("region"), "Не выбран")
         keyboard = build_main_menu(user_region)
         await message.answer("Главное меню:", reply_markup=keyboard)
+
+# ОБРАБОТКА ВЫБОРА РЕГИОНА, КАТЕГОРИИ И ПОДКАТЕГОРИИ
 
 @olx_parser_router.callback_query(lambda c: c.data == "olx_parse")
 async def start_parsing(callback: types.CallbackQuery, state: FSMContext):
@@ -126,19 +128,23 @@ async def region_chosen(callback: types.CallbackQuery, state: FSMContext):
 @olx_parser_router.callback_query(lambda c: c.data.startswith("category:"), ParseStates.waiting_for_category)
 async def category_chosen(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
-    category_code = callback.data.split(":")[1]
+    category_code = callback.data.split(":", 1)[1]
     category_name = CATEGORY_MAPPING.get(category_code, "Неизвестная категория")
     await state.update_data(category=category_code)
     subcats = SUBCATEGORY_MAPPING_FULL.get(category_code)
     if subcats:
         keyboard = build_inline_keyboard(subcats, "subcategory", buttons_per_row=2)
-        await callback.message.answer(f"Вы выбрали категорию «{category_name}». Выберите подкатегорию:", reply_markup=keyboard)
+        await callback.message.answer(
+            f"Вы выбрали категорию «{category_name}». Теперь выберите подкатегорию:",
+            reply_markup=keyboard
+        )
         await state.set_state(ParseStates.waiting_for_subcategory)
     else:
         await state.update_data(subcategory="all")
         await callback.message.answer(f"Запускается парсинг для категории «{category_name}». Ожидайте...")
         data = await state.get_data()
         region_code = data.get("region")
+        # Если подкатегория равна "all", формируем URL без сегмента "all"
         result_text, ads_all = await asyncio.get_running_loop().run_in_executor(
             None, run_selenium_parser, category_code, region_code, "all"
         )
@@ -213,7 +219,6 @@ async def contact_admin(callback: types.CallbackQuery):
 # ============================
 # ОБРАБОТКА ПОИСКА (ИНТЕГРИРОВАНА В ТОМ ЖЕ ФАЙЛЕ)
 # ============================
-
 @olx_parser_router.callback_query(lambda c: c.data == "search")
 async def search_prompt(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer("Введите название для поиска:")
@@ -225,37 +230,95 @@ async def process_search(message: types.Message, state: FSMContext):
     query = message.text.strip()
     await message.answer(f"Поиск по запросу '{query}' запущен. Пожалуйста, подождите...")
     loop = asyncio.get_running_loop()
-    result_text = await loop.run_in_executor(None, search_run_parser, query)
-    offers = result_text.strip().split("\n\n")
-    groups = ["\n\n".join([grp for grp in offers[i:i+5] if grp.strip()]) for i in range(0, len(offers), 5)]
-    await state.update_data(pagination=groups, current_index=0)
-    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[])
-    if len(groups) > 1:
-        keyboard.inline_keyboard.append([types.InlineKeyboardButton(text="Далее", callback_data="next_search_ads")])
-    await message.answer("Результаты поиска:\n\n" + (groups[0] if groups else "Нет данных."), reply_markup=keyboard)
+    # Используем run_selenium_search_parser для поиска по названию; функция возвращает кортеж (result_text, ads_all)
+    result = await loop.run_in_executor(None, run_selenium_search_parser, query)
+    if isinstance(result, tuple):
+        result_text, ads_all = result
+    else:
+        result_text = result
+        ads_all = []
+    # Для поиска отправляем каждое объявление отдельно (порциями по 5)
+    if ads_all:
+        current_index = 0
+        batch = ads_all[current_index:current_index+5]
+        for ad in batch:
+            text = (
+                f"Название: {ad['Название']}\n"
+                f"Цена: {ad['Цена']}\n"
+                f"Описание: {ad['Описание']}\n"
+                f"Телефон: {ad['Телефон']}\n"
+                f"Ссылка: {ad['Ссылка']}"
+            )
+            if ad.get("Фото") and ad["Фото"].strip() and ad["Фото"].startswith("http"):
+                await message.answer_photo(photo=ad["Фото"], caption=text)
+            else:
+                await message.answer(text)
+        current_index += len(batch)
+        await state.update_data(ads=ads_all, current_index=current_index)
+        if current_index < len(ads_all):
+            keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                [types.InlineKeyboardButton(text="Далее", callback_data="next_search_ads")]
+            ])
+            await message.answer("Нажмите 'Далее' для следующих объявлений", reply_markup=keyboard)
+        else:
+            keyboard = build_main_menu("Не выбран")
+            await message.answer("Все объявления отправлены.\nГлавное меню:", reply_markup=keyboard)
+    else:
+        parts = split_text(result_text)
+        for part in parts:
+            await message.answer(part)
     await state.clear()
+
+@olx_parser_router.callback_query(lambda c: c.data == "next_search_ads")
+async def next_search_ads(callback: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    ads_all = data.get("ads", [])
+    current_index = data.get("current_index", 0)
+    batch = ads_all[current_index:current_index+5]
+    for ad in batch:
+        text = (
+            f"Название: {ad['Название']}\n"
+            f"Цена: {ad['Цена']}\n"
+            f"Описание: {ad['Описание']}\n"
+            f"Телефон: {ad['Телефон']}\n"
+            f"Ссылка: {ad['Ссылка']}"
+        )
+        if ad.get("Фото") and ad["Фото"].strip() and ad["Фото"].startswith("http"):
+            await callback.message.answer_photo(photo=ad["Фото"], caption=text)
+        else:
+            await callback.message.answer(text)
+    current_index += len(batch)
+    await state.update_data(current_index=current_index)
+    if current_index < len(ads_all):
+        keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+            [types.InlineKeyboardButton(text="Далее", callback_data="next_search_ads")]
+        ])
+        await callback.message.answer("Нажмите 'Далее' для следующих объявлений", reply_markup=keyboard)
+    else:
+        keyboard = build_main_menu("Не выбран")
+        await callback.message.answer("Все объявления отправлены.\nГлавное меню:", reply_markup=keyboard)
+    await callback.answer()
 
 @olx_parser_router.callback_query(lambda c: c.data == "all_country")
 async def process_all_country(callback: types.CallbackQuery, state: FSMContext):
     BASE_URL = "https://www.olx.kz"
-    query = "автомат"  # Используйте сохраненный запрос, если необходимо
+    query = "автомат"  # Здесь можно использовать сохранённый запрос, если требуется
     search_url = f"{BASE_URL}/list/q-{query}/"
     response = requests.get(search_url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'})
     from bs4 import BeautifulSoup
-    from urllib.parse import urljoin
     soup = BeautifulSoup(response.text, 'lxml')
     results = soup.find_all("div", {"data-cy": "l-card"})
     reply = f"Найдено {len(results)} объявлений по запросу '{query}' по всей стране.\n\n"
     for card in results[:5]:
         try:
             title_tag = card.find("h4", {"class": "css-10ofhqw"}) or card.find("h4")
-            title = title_tag.text.strip() if title_tag else "Нет заголовка"
+            title = title_tag.get_text(strip=True) if title_tag else "Нет заголовка"
             price_tag = card.find("h3", {"class": "css-fqcbii"}) or card.find("p", {"class": "price"})
-            price = price_tag.text.strip() if price_tag else "Нет цены"
+            price = price_tag.get_text(strip=True) if price_tag else "Нет цены"
             desc_tag = card.find("div", {"class": "css-19duwlz"})
             description = desc_tag.get_text(separator="\n").strip() if desc_tag else "Нет описания"
             phone_tag = card.find("a", {"data-testid": "contact-phone", "class": "css-v1ndtc"})
-            phone = phone_tag.text.strip() if phone_tag else "Нет телефона"
+            phone = phone_tag.get_text(strip=True) if phone_tag else "Нет телефона"
             link_tag = card.find("a")
             link = link_tag.get("href") if link_tag else "Нет ссылки"
             if link and link.startswith("/"):

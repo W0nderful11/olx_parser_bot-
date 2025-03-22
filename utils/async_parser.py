@@ -2,7 +2,6 @@ import asyncio
 import aiohttp
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, quote
-import requests
 
 BASE_URL = "https://www.olx.kz"
 

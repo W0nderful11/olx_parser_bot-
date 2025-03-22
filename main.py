@@ -22,7 +22,8 @@ dp.include_router(search_router)
 
 async def main():
     logging.basicConfig(level=logging.INFO)
-    # asyncio.create_task(auto_update())  # Раскомментируйте, если нужен автообновляемый процесс
+    # Если нужен автообновляемый процесс, раскомментируйте следующую строку:
+    # asyncio.create_task(auto_update())
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
