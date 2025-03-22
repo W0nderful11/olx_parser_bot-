@@ -53,7 +53,7 @@ CATEGORY_MAPPING = {
     "hobbi_otdyh_sport": "Хобби, отдых и спорт"
 }
 
-# Импорт полного словаря подкатегорий
+# Импорт полного словаря подкатегорий из config/subcategories.py
 from config.subcategories import SUBCATEGORY_MAPPING_FULL
 
 def build_inline_keyboard(options: dict, prefix: str, buttons_per_row: int = 2) -> types.InlineKeyboardMarkup:
@@ -89,17 +89,18 @@ async def send_ads_batch(message: types.Message, state: FSMContext):
     current_index += len(batch)
     await state.update_data(current_index=current_index)
     if current_index < len(ads):
+        # Если остались объявления, добавляем две кнопки: "Далее" и "Главное меню"
         keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-            [types.InlineKeyboardButton(text="Далее", callback_data="next_ads")]
+            [types.InlineKeyboardButton(text="Далее", callback_data="next_ads"),
+             types.InlineKeyboardButton(text="Главное меню", callback_data="main_menu")]
         ])
-        await message.answer("Нажмите 'Далее' для следующих объявлений", reply_markup=keyboard)
+        await message.answer("Нажмите 'Далее' для следующих объявлений или 'Главное меню' для возврата.", reply_markup=keyboard)
     else:
-        await message.answer("Все объявления отправлены.")
-        user_region = REGION_MAPPING.get((await state.get_data()).get("region"), "Не выбран")
-        keyboard = build_main_menu(user_region)
-        await message.answer("Главное меню:", reply_markup=keyboard)
-
-# ОБРАБОТКА ВЫБОРА РЕГИОНА, КАТЕГОРИИ И ПОДКАТЕГОРИИ
+        # Если объявлений больше нет, отправляем только кнопку "Главное меню"
+        keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+            [types.InlineKeyboardButton(text="Главное меню", callback_data="main_menu")]
+        ])
+        await message.answer("Все объявления отправлены.\nГлавное меню:", reply_markup=keyboard)
 
 @olx_parser_router.callback_query(lambda c: c.data == "olx_parse")
 async def start_parsing(callback: types.CallbackQuery, state: FSMContext):
@@ -144,7 +145,6 @@ async def category_chosen(callback: types.CallbackQuery, state: FSMContext):
         await callback.message.answer(f"Запускается парсинг для категории «{category_name}». Ожидайте...")
         data = await state.get_data()
         region_code = data.get("region")
-        # Если подкатегория равна "all", формируем URL без сегмента "all"
         result_text, ads_all = await asyncio.get_running_loop().run_in_executor(
             None, run_selenium_parser, category_code, region_code, "all"
         )
@@ -237,7 +237,7 @@ async def process_search(message: types.Message, state: FSMContext):
     else:
         result_text = result
         ads_all = []
-    # Для поиска отправляем каждое объявление отдельно (порциями по 5)
+    # Если по запросу найдены объявления, отправляем их порциями по 5 с кнопками "Далее" и "Главное меню"
     if ads_all:
         current_index = 0
         batch = ads_all[current_index:current_index+5]
@@ -257,11 +257,14 @@ async def process_search(message: types.Message, state: FSMContext):
         await state.update_data(ads=ads_all, current_index=current_index)
         if current_index < len(ads_all):
             keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-                [types.InlineKeyboardButton(text="Далее", callback_data="next_search_ads")]
+                [types.InlineKeyboardButton(text="Далее", callback_data="next_search_ads"),
+                 types.InlineKeyboardButton(text="Главное меню", callback_data="main_menu")]
             ])
-            await message.answer("Нажмите 'Далее' для следующих объявлений", reply_markup=keyboard)
+            await message.answer("Нажмите 'Далее' для следующих объявлений или 'Главное меню' для возврата.", reply_markup=keyboard)
         else:
-            keyboard = build_main_menu("Не выбран")
+            keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                [types.InlineKeyboardButton(text="Главное меню", callback_data="main_menu")]
+            ])
             await message.answer("Все объявления отправлены.\nГлавное меню:", reply_markup=keyboard)
     else:
         parts = split_text(result_text)
@@ -291,11 +294,14 @@ async def next_search_ads(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(current_index=current_index)
     if current_index < len(ads_all):
         keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-            [types.InlineKeyboardButton(text="Далее", callback_data="next_search_ads")]
+            [types.InlineKeyboardButton(text="Далее", callback_data="next_search_ads"),
+             types.InlineKeyboardButton(text="Главное меню", callback_data="main_menu")]
         ])
-        await callback.message.answer("Нажмите 'Далее' для следующих объявлений", reply_markup=keyboard)
+        await callback.message.answer("Нажмите 'Далее' для следующих объявлений или 'Главное меню' для возврата.", reply_markup=keyboard)
     else:
-        keyboard = build_main_menu("Не выбран")
+        keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+            [types.InlineKeyboardButton(text="Главное меню", callback_data="main_menu")]
+        ])
         await callback.message.answer("Все объявления отправлены.\nГлавное меню:", reply_markup=keyboard)
     await callback.answer()
 
