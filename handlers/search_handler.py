@@ -55,11 +55,19 @@ async def search_prompt(callback: types.CallbackQuery, state: FSMContext):
 async def process_search(message: types.Message, state: FSMContext):
     query = message.text.strip()
     await message.answer(f"Поиск по запросу '{query}' запущен. Пожалуйста, подождите...")
-    result_text, ads_all = await asyncio.get_running_loop().run_in_executor(
-        None, run_selenium_search_parser, query
-    )
+    loop = asyncio.get_running_loop()
+    result_text = await loop.run_in_executor(None, run_selenium_search_parser, query)
+    # Предполагается, что run_selenium_search_parser возвращает итоговый текст и список объявлений
+    # Разбиваем текст на группы по 5 объявлений для постраничного вывода
+    ads_all = result_text[1]  # ads_all – список объявлений (словарей)
+    text_result = result_text[0]  # итоговый текст
+    offers = text_result.strip().split("\n\n")
+    groups = ["\n\n".join([grp for grp in offers[i:i+5] if grp.strip()]) for i in range(0, len(offers), 5)]
     await state.update_data(ads=ads_all, current_index=0)
-    await send_search_ads_batch(message, state)
+    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[])
+    if len(groups) > 1:
+        keyboard.inline_keyboard.append([types.InlineKeyboardButton(text="Далее", callback_data="next_search_ads")])
+    await message.answer("Результаты поиска:\n\n" + (groups[0] if groups else "Нет данных."), reply_markup=keyboard)
     await state.clear()
 
 @search_router.callback_query(lambda c: c.data == "next_search_ads")

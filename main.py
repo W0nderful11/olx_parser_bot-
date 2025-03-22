@@ -16,15 +16,13 @@ if not BOT_TOKEN:
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# Регистрируем роутеры
 dp.include_router(start_router)
 dp.include_router(olx_parser_router)
 dp.include_router(search_router)
 
 async def main():
     logging.basicConfig(level=logging.INFO)
-    # Запуск автообновления (удаление старых данных и обновление каждые 7 дней)
-    #asyncio.create_task(auto_update())
+    # asyncio.create_task(auto_update())  # Раскомментируйте, если нужен автообновляемый процесс
     await dp.start_polling(bot)
 
 if __name__ == '__main__':

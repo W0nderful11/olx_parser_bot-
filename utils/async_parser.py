@@ -81,19 +81,42 @@ async def async_search_run_parser(query):
     return await async_parse_ads(url)
 
 async def async_run_parser(category_code, region_code, subcategory_code):
-    """
-    Асинхронный парсер для OLX.kz по выбранной категории, региону и подкатегории.
-    Формирует URL вида:
-      https://www.olx.kz/<category_code>/<region_code>/<subcategory_code>/
-    Если по выбранной подкатегории не найдено объявлений, выполняется fallback‑поиск по запросу subcategory_code.
-    """
     url = f"{BASE_URL}/{category_code}/{region_code}/{subcategory_code}/"
-    result_text, ads_all = await async_parse_ads(url)
-    if not ads_all:
-        # Если по URL выбранной подкатегории объявлений нет, используем subcategory_code как поисковый запрос
-        result_text, ads_all = await async_search_run_parser(subcategory_code)
+    semaphore = asyncio.Semaphore(5)
+    async with aiohttp.ClientSession() as session:
+        first_page_html = await fetch_page(session, url, semaphore)
+        soup = BeautifulSoup(first_page_html, 'lxml')
+        try:
+            pagination_items = soup.find_all('li', {'data-testid': 'pagination-list-item'})
+            if pagination_items:
+                total_pages = int(pagination_items[-1].get_text(strip=True))
+            else:
+                total_pages = 1
+        except Exception:
+            total_pages = 1
+        total_pages = min(total_pages, 5)
+        tasks = []
+        for page in range(1, total_pages + 1):
+            page_url = f"{url}?page={page}"
+            tasks.append(fetch_page(session, page_url, semaphore))
+        pages_html = await asyncio.gather(*tasks, return_exceptions=True)
+
+    ads_all = []
+    for page_html in pages_html:
+        if isinstance(page_html, Exception):
+            continue
+        ads = await parse_ads_from_page(page_html)
+        ads_all.extend(ads)
+    result_text = f"Найдено {len(ads_all)} объявлений.\n\n"
+    for ad in ads_all:
+        result_text += (
+            f"Название: {ad['Название']}\n"
+            f"Цена: {ad['Цена']}\n"
+            f"Описание: {ad['Описание']}\n"
+            f"Телефон: {ad['Телефон']}\n"
+            f"Ссылка: {ad['Ссылка']}\n\n"
+        )
     return result_text, ads_all
 
 def split_text(text: str, max_length: int = 4096) -> list:
-    """Разбивает длинный текст на части для отправки в Telegram."""
     return [text[i:i + max_length] for i in range(0, len(text), max_length)]
